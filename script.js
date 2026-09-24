@@ -2,7 +2,8 @@
   'use strict';
 
   var PHOTO_COUNT = 50;
-  var PHOTO_EXT = 'jpeg';
+  var PHOTO_EXT = 'webp';
+  var PHOTO_SKIP = { 23: true };
   var STRIPE_HEIGHT = 268;
   var FALLBACK_SRC =
     'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
@@ -12,6 +13,7 @@
   function photoSources() {
     var srcs = [];
     for (var i = 1; i <= PHOTO_COUNT; i++) {
+      if (PHOTO_SKIP[i]) continue;
       var name = String(i).padStart(2, '0');
       srcs.push('photos/' + name + '.' + PHOTO_EXT);
     }
