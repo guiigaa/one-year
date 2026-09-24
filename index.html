@@ -46,6 +46,23 @@
 		</div>
 	</main>
 
+	<audio id="music" loop preload="auto" playsinline>
+		<source src="music/song.m4a" type="audio/mp4">
+		<source src="music/song.mp3" type="audio/mpeg">
+	</audio>
+
+	<button id="musicToggle" type="button" aria-label="Play or pause music"
+		aria-pressed="false">
+		<svg id="iconPlay" class="icon icon-play" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+			fill="currentColor">
+			<path d="M8 5v14l11-7z" />
+		</svg>
+		<svg id="iconPause" class="icon icon-pause" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+			fill="currentColor" style="display:none">
+			<path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+		</svg>
+	</button>
+
 	<script src="script.js" defer></script>
 </body>
 

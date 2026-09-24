@@ -5,6 +5,7 @@
   var PHOTO_EXT = 'webp';
   var PHOTO_SKIP = { 23: true };
   var STRIPE_HEIGHT = 268;
+  var SONG_START_SECONDS = 4;
   var FALLBACK_SRC =
     'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
@@ -122,4 +123,89 @@
       extraClass: 'diagonal tilt-b'
     });
   }
+
+  var card = document.querySelector('.message-card');
+  document.addEventListener('click', function () {
+    card.classList.toggle('is-hidden');
+  });
+
+  var music = document.getElementById('music');
+  var musicToggle = document.getElementById('musicToggle');
+  var iconPlay = document.getElementById('iconPlay');
+  var iconPause = document.getElementById('iconPause');
+
+  function setMusicState(playing) {
+    iconPlay.style.display = playing ? 'none' : 'block';
+    iconPause.style.display = playing ? 'block' : 'none';
+    musicToggle.setAttribute('aria-pressed', String(playing));
+  }
+
+  music.addEventListener('play', function () { setMusicState(true); });
+  music.addEventListener('pause', function () { setMusicState(false); });
+
+  function tryPlay() {
+    var promise = music.play();
+    if (promise && promise.catch) {
+      promise.catch(function () {});
+    }
+  }
+
+  var audioStarted = false;
+
+  function applyStartTime() {
+    if (SONG_START_SECONDS > 0 && isFinite(music.duration)) {
+      music.currentTime = Math.min(SONG_START_SECONDS, music.duration);
+    }
+  }
+
+  function startPlayback() {
+    if (audioStarted) return;
+    audioStarted = true;
+    applyStartTime();
+    tryPlay();
+  }
+
+  function tryAutoplay() {
+    var promise = music.play();
+    if (promise && promise.then) {
+      promise.then(function () {
+        if (!audioStarted) {
+          audioStarted = true;
+          applyStartTime();
+        }
+      }).catch(function () {
+        music.muted = true;
+        if (music.readyState >= 1) applyStartTime();
+        tryPlay();
+      });
+    }
+  }
+
+  function resumeOnGesture() {
+    if (music.muted) music.muted = false;
+    if (music.paused) {
+      startPlayback();
+    }
+    document.removeEventListener('pointerdown', resumeOnGesture);
+    document.removeEventListener('touchstart', resumeOnGesture);
+    document.removeEventListener('keydown', resumeOnGesture);
+  }
+
+  musicToggle.addEventListener('click', function (event) {
+    event.stopPropagation();
+    if (music.paused) {
+      tryPlay();
+    } else {
+      music.pause();
+    }
+  });
+
+  if (music.readyState >= 1) {
+    tryAutoplay();
+  } else {
+    music.addEventListener('loadedmetadata', tryAutoplay, { once: true });
+  }
+  document.addEventListener('pointerdown', resumeOnGesture);
+  document.addEventListener('touchstart', resumeOnGesture);
+  document.addEventListener('keydown', resumeOnGesture);
 })();
