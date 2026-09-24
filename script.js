@@ -124,8 +124,14 @@
     });
   }
 
+  var firstTap = true;
+
   var card = document.querySelector('.message-card');
   document.addEventListener('click', function () {
+    if (firstTap) {
+      firstTap = false;
+      return;
+    }
     card.classList.toggle('is-hidden');
   });
 
@@ -151,6 +157,7 @@
   }
 
   var audioStarted = false;
+  var autoplayTried = false;
 
   function applyStartTime() {
     if (SONG_START_SECONDS > 0 && isFinite(music.duration)) {
@@ -158,14 +165,9 @@
     }
   }
 
-  function startPlayback() {
-    if (audioStarted) return;
-    audioStarted = true;
-    applyStartTime();
-    tryPlay();
-  }
-
-  function tryAutoplay() {
+  function beginAtLoad() {
+    if (autoplayTried) return;
+    autoplayTried = true;
     var promise = music.play();
     if (promise && promise.then) {
       promise.then(function () {
@@ -174,25 +176,40 @@
           applyStartTime();
         }
       }).catch(function () {
+        audioStarted = true;
         music.muted = true;
         if (music.readyState >= 1) applyStartTime();
         tryPlay();
       });
+    } else {
+      audioStarted = true;
+      applyStartTime();
+      tryPlay();
     }
   }
 
-  function resumeOnGesture() {
+  function onGesture() {
     if (music.muted) music.muted = false;
     if (music.paused) {
-      startPlayback();
+      if (!audioStarted) {
+        audioStarted = true;
+        applyStartTime();
+      }
+      tryPlay();
     }
-    document.removeEventListener('pointerdown', resumeOnGesture);
-    document.removeEventListener('touchstart', resumeOnGesture);
-    document.removeEventListener('keydown', resumeOnGesture);
+    GESTURE_EVENTS.forEach(function (ev) {
+      document.removeEventListener(ev, onGesture);
+    });
   }
+
+  var GESTURE_EVENTS = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
+  GESTURE_EVENTS.forEach(function (ev) {
+    document.addEventListener(ev, onGesture);
+  });
 
   musicToggle.addEventListener('click', function (event) {
     event.stopPropagation();
+    if (firstTap) firstTap = false;
     if (music.paused) {
       tryPlay();
     } else {
@@ -201,11 +218,9 @@
   });
 
   if (music.readyState >= 1) {
-    tryAutoplay();
+    beginAtLoad();
   } else {
-    music.addEventListener('loadedmetadata', tryAutoplay, { once: true });
+    music.addEventListener('loadedmetadata', beginAtLoad, { once: true });
   }
-  document.addEventListener('pointerdown', resumeOnGesture);
-  document.addEventListener('touchstart', resumeOnGesture);
-  document.addEventListener('keydown', resumeOnGesture);
+  music.addEventListener('canplay', beginAtLoad);
 })();
