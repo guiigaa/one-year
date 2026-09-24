@@ -3,6 +3,9 @@
 
   var PHOTO_COUNT = 50;
   var PHOTO_EXT = 'jpeg';
+  var STRIPE_HEIGHT = 268;
+  var FALLBACK_SRC =
+    'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
   var background = document.getElementById('filmBackground');
 
@@ -38,8 +41,11 @@
       var img = document.createElement('img');
       img.src = src;
       img.alt = '';
-      img.loading = 'lazy';
       img.decoding = 'async';
+      img.draggable = false;
+      img.onerror = function () {
+        this.src = FALLBACK_SRC;
+      };
 
       frame.appendChild(img);
       frag.appendChild(frame);
@@ -54,15 +60,11 @@
     var content = document.createElement('div');
     content.className = 'strip-content';
 
-    var srcs = shuffle(photoSources());
-    content.appendChild(buildFrames(srcs));
-    content.appendChild(buildFrames(shuffle(srcs.slice())));
+    var order = shuffle(photoSources());
+    content.appendChild(buildFrames(order));
+    content.appendChild(buildFrames(order.slice()));
 
-    var duration = options.duration || 400;
-    var isDiagonal = /diagonal/.test(options.extraClass || '');
-    content.style.animationDuration = isDiagonal
-      ? duration + 's, 11s'
-      : duration + 's';
+    content.style.animationDuration = (options.duration || 400) + 's';
     if (options.reverse) {
       content.style.animationDirection = 'reverse';
     }
@@ -72,58 +74,50 @@
     background.appendChild(strip);
   }
 
-  var stripeHeight = 221;
+  function bandPlan(isMobile, innerHeight) {
+    if (isMobile) {
+      return { rows: 4, step: 280 };
+    }
+    var step = Math.round(STRIPE_HEIGHT * 0.68);
+    var rows = Math.max(6, Math.ceil((innerHeight + STRIPE_HEIGHT) / step));
+    rows = Math.min(rows, 8);
+    return { rows: rows, step: step };
+  }
 
-  createStrip({
-    top: 0,
-    duration: rand(340, 460),
-    reverse: false
-  });
+  var isMobile = window.innerWidth < 640;
+  var plan = bandPlan(isMobile, window.innerHeight);
 
-  createStrip({
-    top: stripeHeight - 70,
-    duration: rand(400, 520),
-    reverse: true,
-    extraClass: 'h narrow'
-  });
+  var r;
+  for (r = 0; r < plan.rows; r++) {
+    var narrow = r % 2 === 1;
+    createStrip({
+      top: r * plan.step,
+      duration: rand(320, 480),
+      reverse: narrow,
+      extraClass: 'h' + (narrow ? ' narrow' : '')
+    });
+  }
 
-  createStrip({
-    top: stripeHeight * 2 - 140,
-    duration: rand(360, 480),
-    reverse: false,
-    extraClass: 'h narrow'
-  });
+  if (isMobile) {
+    createStrip({
+      top: Math.round(window.innerHeight * 0.55),
+      duration: rand(500, 660),
+      reverse: true,
+      extraClass: 'diagonal tilt-a'
+    });
+  } else {
+    createStrip({
+      top: -STRIPE_HEIGHT * 1.3,
+      duration: rand(520, 680),
+      reverse: true,
+      extraClass: 'diagonal tilt-a'
+    });
 
-  createStrip({
-    top: stripeHeight * 3 - 210,
-    duration: rand(320, 440),
-    reverse: true
-  });
-
-  createStrip({
-    top: stripeHeight * 4 - 280,
-    duration: rand(380, 500),
-    reverse: false,
-    extraClass: 'h narrow'
-  });
-
-  createStrip({
-    top: stripeHeight * 5 - 350,
-    duration: rand(340, 460),
-    reverse: true
-  });
-
-  createStrip({
-    top: -stripeHeight * 1.3,
-    duration: rand(520, 680),
-    reverse: true,
-    extraClass: 'diagonal tilt-a'
-  });
-
-  createStrip({
-    top: stripeHeight * 2.5,
-    duration: rand(560, 720),
-    reverse: false,
-    extraClass: 'diagonal tilt-b'
-  });
+    createStrip({
+      top: STRIPE_HEIGHT * 2.5,
+      duration: rand(560, 720),
+      reverse: false,
+      extraClass: 'diagonal tilt-b'
+    });
+  }
 })();
