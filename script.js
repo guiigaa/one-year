@@ -3,11 +3,10 @@
 
   var PHOTO_COUNT = 50;
   var PHOTO_EXT = 'webp';
+  var PHOTO_DIR = 'photos/thumbs/';
   var PHOTO_SKIP = { 23: true };
   var STRIPE_HEIGHT = 268;
   var SONG_START_SECONDS = 4;
-  var FALLBACK_SRC =
-    'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
   var background = document.getElementById('filmBackground');
 
@@ -16,7 +15,7 @@
     for (var i = 1; i <= PHOTO_COUNT; i++) {
       if (PHOTO_SKIP[i]) continue;
       var name = String(i).padStart(2, '0');
-      srcs.push('photos/' + name + '.' + PHOTO_EXT);
+      srcs.push(PHOTO_DIR + name + '.' + PHOTO_EXT);
     }
     return srcs;
   }
@@ -46,8 +45,16 @@
       img.alt = '';
       img.decoding = 'async';
       img.draggable = false;
+      var retries = 0;
+      var original = src;
       img.onerror = function () {
-        this.src = FALLBACK_SRC;
+        if (retries === 0) {
+          retries = 1;
+          var that = this;
+          setTimeout(function () { that.src = original; }, 600);
+        } else {
+          this.style.visibility = 'hidden';
+        }
       };
 
       frame.appendChild(img);
