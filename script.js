@@ -124,14 +124,8 @@
     });
   }
 
-  var firstTap = true;
-
   var card = document.querySelector('.message-card');
   document.addEventListener('click', function () {
-    if (firstTap) {
-      firstTap = false;
-      return;
-    }
     card.classList.toggle('is-hidden');
   });
 
@@ -156,60 +150,14 @@
     }
   }
 
-  var audioStarted = false;
-  var autoplayTried = false;
-
   function applyStartTime() {
     if (SONG_START_SECONDS > 0 && isFinite(music.duration)) {
       music.currentTime = Math.min(SONG_START_SECONDS, music.duration);
     }
   }
 
-  function beginAtLoad() {
-    if (autoplayTried) return;
-    autoplayTried = true;
-    var promise = music.play();
-    if (promise && promise.then) {
-      promise.then(function () {
-        if (!audioStarted) {
-          audioStarted = true;
-          applyStartTime();
-        }
-      }).catch(function () {
-        audioStarted = true;
-        music.muted = true;
-        if (music.readyState >= 1) applyStartTime();
-        tryPlay();
-      });
-    } else {
-      audioStarted = true;
-      applyStartTime();
-      tryPlay();
-    }
-  }
-
-  function onGesture() {
-    if (music.muted) music.muted = false;
-    if (music.paused) {
-      if (!audioStarted) {
-        audioStarted = true;
-        applyStartTime();
-      }
-      tryPlay();
-    }
-    GESTURE_EVENTS.forEach(function (ev) {
-      document.removeEventListener(ev, onGesture);
-    });
-  }
-
-  var GESTURE_EVENTS = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
-  GESTURE_EVENTS.forEach(function (ev) {
-    document.addEventListener(ev, onGesture);
-  });
-
   musicToggle.addEventListener('click', function (event) {
     event.stopPropagation();
-    if (firstTap) firstTap = false;
     if (music.paused) {
       tryPlay();
     } else {
@@ -217,10 +165,14 @@
     }
   });
 
-  if (music.readyState >= 1) {
-    beginAtLoad();
-  } else {
-    music.addEventListener('loadedmetadata', beginAtLoad, { once: true });
-  }
-  music.addEventListener('canplay', beginAtLoad);
+  var welcome = document.getElementById('welcome');
+  var ticket = document.getElementById('ticket');
+
+  ticket.addEventListener('click', function (event) {
+    event.stopPropagation();
+    music.muted = false;
+    applyStartTime();
+    tryPlay();
+    welcome.classList.add('hide');
+  });
 })();
